@@ -1,31 +1,23 @@
-const express = require('express')
-const mongoose = require('module')
-const cors = require('cors')
-const PORT = process.env.PORT || 5050
-const cookie = require('cookie-parser')
+const mongoose = require('mongoose')
 require('dotenv').config()
-app.use(cookie())
+const PORT = process.env.PORT || 5050
 
+const app = require('./app')
+const { mongo } = require('mongoose')
 
-const app = express()
+mongoose.connect(process.env.MONGO_URI, {useNewUrlParser:true, useUnifiedTopology:true})
+    .then(()=> console.log('DB Connected'))
+    .catch(err=> console.log('error connecting', err))
+    mongoose.Promise = global.Promise
 
-app.use(cors())
-app.use(express.json())
+const server =app.listen(PORT, ()=> console.log(`server running on ${PORT}`))
 
+const io = require('socket.io')(server)
 
-app.use((req,res,next)=>{
-    const error = new Error('Not Found');
-    error.status= 400
-    next(error)
-})
+io.on('connect', socket=>{
+    console.log('connected', socket)
 
-app.use((error,req,res,next)=>{
-    res.status(error.status || 500)
-    res.json({
-        error:{
-            message: error.message
-        }
+    socket.on('disconnect', ()=>{
+        console.log('disconnected')
     })
 })
-
-app.listen(PORT, ()=> console.log('server running'))
