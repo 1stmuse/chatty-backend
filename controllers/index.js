@@ -2,6 +2,7 @@
 const User = require('../models/UserModel')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+require('dotenv').config()
 
 exports.register = async (req, res, next) =>{
     const user = await User.findOne({username: req.body.username})
@@ -37,11 +38,17 @@ exports.login = async(req, res, next)=>{
     
         const password = await bcrypt.compareSync(req.body.password, user.password)
         if(!password){
-            const error = new Error('this username already exist')
+            const error = new Error('username or password incorrect')
             error.status = 401
             next(error)
         }
-        res.status(200).json({success:true})
+        const token = await jwt.sign(user._id.toHexString(), process.env.TOKEN_SECRET)
+        if(!token){
+            const error = new Error('could not generate token')
+            error.status = 401
+            next(error)
+        }
+        res.cookie('x_auth', token).status(200).json({success:true, token})
     } catch (err) {
         const error = new Error(err)
             error.status = 401
