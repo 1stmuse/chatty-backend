@@ -2,8 +2,8 @@ const jwt = require('jsonwebtoken')
 const User = require('../models/UserModel')
 require('dotenv').config()
 
-export const jwtVerify= async(req, res, next) =>{
-    const token = req.cookies.x-auth
+const auth= async(req, res, next) =>{
+    const token = req.cookies.x_auth
 
     const decode = await jwt.verify(token, process.env.TOKEN_SECRET)
 
@@ -13,6 +13,7 @@ export const jwtVerify= async(req, res, next) =>{
         error.status = 401
         next(error)
     }
-
     next()
 }
+
+module.exports = auth

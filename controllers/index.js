@@ -1,5 +1,6 @@
 
 const User = require('../models/UserModel')
+const Chatroom = require('../models/chatroomMOdel')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 require('dotenv').config()
@@ -53,5 +54,34 @@ exports.login = async(req, res, next)=>{
         const error = new Error(err)
             error.status = 401
             next(error)
+    }
+}
+
+exports.createRoom = async (req, res , next)=>{
+    const room = await Chatroom.findOne({name: req.body.name})
+    if(room){
+        const error = new Error('room name already exist')
+            error.status = 401
+            next(error)
+    }else{
+        try {
+            const newRoom = await new Chatroom(req.body)
+            await newRoom.save()
+            res.status(200).json({success:true})
+        } catch (err) {
+            const error = new Error(err)
+            next(error)
+        }
+    }
+}
+
+exports.getRooms = async(req, res, next) =>{
+    try {
+        const rooms = await Chatroom.find()
+        res.status(200).json({success:true, rooms})
+    } catch (err) {
+        const error = new Error(err)
+        error.status = 401
+        next(error)
     }
 }
