@@ -35,6 +35,7 @@ exports.login = async(req, res, next)=>{
             const error = new Error('username or password incorrect')
             error.status = 401
             next(error)
+            return
         }
     
         const password = await bcrypt.compareSync(req.body.password, user.password)
@@ -42,6 +43,7 @@ exports.login = async(req, res, next)=>{
             const error = new Error('username or password incorrect')
             error.status = 401
             next(error)
+            return
         }
         const token = await jwt.sign(user._id.toHexString(), process.env.TOKEN_SECRET)
         if(!token){
@@ -49,7 +51,7 @@ exports.login = async(req, res, next)=>{
             error.status = 401
             next(error)
         }
-        res.cookie('x_auth', token).status(200).json({success:true, token})
+        res.cookie('x_auth', token).status(200).json({success:true, token, message:'login succesfull'})
     } catch (err) {
         const error = new Error(err)
             error.status = 401
@@ -67,7 +69,7 @@ exports.createRoom = async (req, res , next)=>{
         try {
             const newRoom = await new Chatroom(req.body)
             await newRoom.save()
-            res.status(200).json({success:true})
+            res.status(200).json({success:true, message:'room created'})
         } catch (err) {
             const error = new Error(err)
             next(error)

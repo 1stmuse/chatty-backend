@@ -4,6 +4,12 @@ require('dotenv').config()
 
 const auth= async(req, res, next) =>{
     const token = req.cookies.x_auth
+    if(!token){
+        const error = new Error('no token')
+        error.status = 401
+        next(error)
+        return
+    }
 
     const decode = await jwt.verify(token, process.env.TOKEN_SECRET)
 
