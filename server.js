@@ -1,7 +1,11 @@
 const mongoose = require('mongoose')
+const http = require('http')
 require('dotenv').config()
 const PORT = process.env.PORT || 5050
+const jwt = require('jsonwebtoken')
 const app = require('./app')
+const User = require('./models/UserModel')
+const Room = require('./models/chatroomMOdel')
 
 mongoose.connect(process.env.MONGO_URI, {useNewUrlParser:true, useUnifiedTopology:true})
     .then(()=> console.log('DB Connected'))
@@ -9,25 +13,36 @@ mongoose.connect(process.env.MONGO_URI, {useNewUrlParser:true, useUnifiedTopolog
     
 mongoose.Promise = global.Promise
 
-const server =app.listen(PORT, ()=> console.log(`server running on ${PORT}`))
+const server = http.createServer(app) 
 
-const io = require('socket.io')(server)
+const io = require('socket.io').listen(server)
 io.use(async(socket, next)=>{
-    const user = socket.handshake.query.id
-    socket.userId = user
-    next()
+    const token = socket.handshake.query.id
+    try {
+        const userId =  await jwt.verify(token, process.env.TOKEN_SECRET)
+    
+        socket.user = userId
+        next()
+    } catch (error) {
+        console.log(error)
+    }
 })
 
 io.on('connection', socket=>{
-    console.log('connected', socket.userId)
-    socket.emit('connect', socket.userId)
-    socket.emit('mess', 'hello world')
-    socket.on('inbox', message=>{
-        console.log(message)
-        socket.emit('rece')
+    console.log('connected', socket.user)
+    socket.emit('connect', (socket.user, 'from BE'))
+    socket.on('joinRoom', async (roomId)=>{
+        const user = await User.findById(socket.user)
+
+        socket.join(roomId)
+        socket.broadcast.to(roomId).emit('new-message', {message:`${user.name} joined the groud`, name:'Admin'})
+        console.log('joined room', roomId, user.name)
     })
+ 
 
     socket.on('disconnect', ()=>{
-        console.log('disconnected', socket.userId)
+        console.log('disconnected', socket.user)
     })
 })
+
+server.listen(PORT, ()=> console.log(`server running on ${PORT}`))

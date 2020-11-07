@@ -5,6 +5,9 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 require('dotenv').config()
 
+
+
+
 exports.register = async (req, res, next) =>{
     const user = await User.findOne({username: req.body.username})
     if(user){
@@ -51,7 +54,7 @@ exports.login = async(req, res, next)=>{
             error.status = 401
             next(error)
         }
-        res.cookie('x_auth', token).status(200).json({success:true, token, message:'login succesfull'})
+        res.cookie('auth', token).status(200).json({success:true, token, user:user, message:'login succesfull'})
     } catch (err) {
         const error = new Error(err)
             error.status = 401

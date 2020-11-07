@@ -3,7 +3,7 @@ const User = require('../models/UserModel')
 require('dotenv').config()
 
 const auth= async(req, res, next) =>{
-    const token = req.cookies.x_auth
+    const token = req.params.token
     if(!token){
         const error = new Error('no token')
         error.status = 401

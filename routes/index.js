@@ -5,6 +5,6 @@ const auth = require('../middleWares/auth')
 Router.post('/user/register', register)
 Router.post('/user/login', login)
 Router.post('/user/createRoom',auth, createRoom)
-Router.get('/user/rooms', auth, getRooms)
+Router.get('/user/rooms/:token', auth, getRooms)
 
 module.exports = Router
