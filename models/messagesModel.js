@@ -13,10 +13,12 @@ const messages = new Schema({
         ref: 'users',
         required: 'Chat room is required'
     },
-    messages: {
+    message: {
         type:String,
         required:'Message is required'
     }
 }, {timestamps:true})
 
 const Messages = mongoose.model('messages', messages)
+
+module.exports = Messages

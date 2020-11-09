@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken')
 const app = require('./app')
 const User = require('./models/UserModel')
 const Room = require('./models/chatroomMOdel')
+const Chatmessage = require('./models/messagesModel')
 
 mongoose.connect(process.env.MONGO_URI, {useNewUrlParser:true, useUnifiedTopology:true})
     .then(()=> console.log('DB Connected'))
@@ -36,10 +37,24 @@ io.on('connection', socket=>{
 
         socket.join(roomId)
         socket.broadcast.to(roomId).emit('new-message', {message:`${user.name} joined the groud`, name:'Admin'})
-        console.log('joined room', roomId, user.name)
+        socket.emit('new-message', {message: `welcome to the group ${user.name}`, name:'Admin' })
+        // console.log('joined room', roomId, user.name)
+
     })
  
-
+    socket.on('sendMessage', async(message)=>{
+        try {
+            const newMessage = new Chatmessage({
+                chatroom:message.roomId,
+                user: socket.user,
+                message: message.message
+            })
+            await newMessage.save()
+            io.to(message.roomId).emit('new-message', {message:message.message, name: message.userName})
+        } catch (error) {
+            console.log(error)
+        }
+    })
     socket.on('disconnect', ()=>{
         console.log('disconnected', socket.user)
     })
