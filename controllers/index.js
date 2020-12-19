@@ -23,7 +23,7 @@ exports.register = async (req, res, next) =>{
         await newUser.save()
         res.status(200).json({success:true})
     } catch (err) {
-        const error = new Error(er)
+        const error = new Error(err.message)
         error.status = 401
         next(error)
         
@@ -41,14 +41,14 @@ exports.login = async(req, res, next)=>{
             return
         }
     
-        const password = await bcrypt.compareSync(req.body.password, user.password)
+        const password = bcrypt.compareSync(req.body.password, user.password)
         if(!password){
             const error = new Error('username or password incorrect')
             error.status = 401
             next(error)
             return
         }
-        const token = await jwt.sign(user._id.toHexString(), process.env.TOKEN_SECRET)
+        const token = jwt.sign(user._id.toHexString(), process.env.TOKEN_SECRET)
         if(!token){
             const error = new Error('could not generate token')
             error.status = 401
@@ -56,7 +56,7 @@ exports.login = async(req, res, next)=>{
         }
         res.cookie('auth', token).status(200).json({success:true, token, user:user, message:'login succesfull'})
     } catch (err) {
-        const error = new Error(err)
+        const error = new Error(err.message)
             error.status = 401
             next(error)
     }
@@ -70,11 +70,11 @@ exports.createRoom = async (req, res , next)=>{
             next(error)
     }else{
         try {
-            const newRoom = await new Chatroom(req.body)
+            const newRoom = new Chatroom(req.body)
             await newRoom.save()
             res.status(200).json({success:true, message:'room created'})
         } catch (err) {
-            const error = new Error(err)
+            const error = new Error(err.message)
             next(error)
         }
     }
@@ -86,6 +86,19 @@ exports.getRooms = async(req, res, next) =>{
         res.status(200).json({success:true, rooms})
     } catch (err) {
         const error = new Error(err)
+        error.status = 401
+        next(error)
+    }
+}
+
+exports.getRoomMembers= async(req, res, next)=>{
+    try {
+        const room = await Chatroom.findById(req.params.roomId).select('users -_id')
+        const members = room.users
+    
+        res.status(200).json({success:true, data: members })
+    } catch (err) {
+        const error = new Error(err.message)
         error.status = 401
         next(error)
     }

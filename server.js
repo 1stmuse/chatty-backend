@@ -7,8 +7,9 @@ const app = require('./app')
 const User = require('./models/UserModel')
 const Room = require('./models/chatroomMOdel')
 const Chatmessage = require('./models/messagesModel')
+const {joinRoom, getRoomMembers} = require('./utils/index')
 
-mongoose.connect(process.env.MONGO_URI, {useNewUrlParser:true, useUnifiedTopology:true})
+mongoose.connect('mongodb://localhost/chatty', {useNewUrlParser:true, useUnifiedTopology:true})
     .then(()=> console.log('DB Connected'))
     .catch(err=> console.log('error connecting', err))
     
@@ -20,7 +21,7 @@ const io = require('socket.io').listen(server)
 io.use(async(socket, next)=>{
     const token = socket.handshake.query.id
     try {
-        const userId =  await jwt.verify(token, process.env.TOKEN_SECRET)
+        const userId =  jwt.verify(token, process.env.TOKEN_SECRET)
     
         socket.user = userId
         next()
@@ -34,11 +35,12 @@ io.on('connection', socket=>{
     socket.emit('connect', (socket.user, 'from BE'))
     socket.on('joinRoom', async (roomId)=>{
         const user = await User.findById(socket.user)
+        // const users = await 
 
         socket.join(roomId)
         socket.broadcast.to(roomId).emit('new-message', {message:`${user.name} joined the groud`, name:'Admin'})
         socket.emit('new-message', {message: `welcome to the group ${user.name}`, name:'Admin' })
-        // console.log('joined room', roomId, user.name)
+        joinRoom(user.name,roomId)
 
     })
  
