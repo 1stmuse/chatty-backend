@@ -14,6 +14,7 @@ mongoose.connect('mongodb://localhost/chatty', {useNewUrlParser:true, useUnified
     .catch(err=> console.log('error connecting', err))
     
 mongoose.Promise = global.Promise
+const randomId = () => Math.random()
 
 const server = http.createServer(app) 
 
@@ -31,16 +32,18 @@ io.use(async(socket, next)=>{
 })
 
 io.on('connection', socket=>{
-    console.log('connected', socket.user)
+    // console.log('connected', socket.user)
     socket.emit('connect', (socket.user, 'from BE'))
     socket.on('joinRoom', async (roomId)=>{
         const user = await User.findById(socket.user)
         // const users = await 
 
         socket.join(roomId)
-        socket.broadcast.to(roomId).emit('new-message', {message:`${user.name} joined the groud`, name:'Admin'})
-        socket.emit('new-message', {message: `welcome to the group ${user.name}`, name:'Admin' })
-        joinRoom(user.name,roomId)
+        const users = await joinRoom(user.name,roomId)
+        // console.log(users)
+        socket.emit('members', users)
+        socket.broadcast.to(roomId).emit('new-message', {message:{id:randomId(), message:`${user.name} joined the groud`}, name:'Admin'})
+        socket.emit('new-message', {message: {id:randomId(), message:`welcome to the group ${user.name}`}, name:'Admin'})
 
     })
  
@@ -51,14 +54,14 @@ io.on('connection', socket=>{
                 user: socket.user,
                 message: message.message
             })
-            await newMessage.save()
-            io.to(message.roomId).emit('new-message', {message:message.message, name: message.userName})
+            const savedMessage = await newMessage.save()
+            io.to(message.roomId).emit('new-message', {message:{id:savedMessage._id, message:savedMessage.message}, name: message.userName})
         } catch (error) {
             console.log(error)
         }
     })
     socket.on('disconnect', ()=>{
-        console.log('disconnected', socket.user)
+        // console.log('disconnected', socket.user)
     })
 })
 

@@ -4,7 +4,6 @@ const cookie = require('cookie-parser')
 
 const app = express()
 const routes = require('./routes')
-const {joinRoom, getRoomMembers} = require('./utils/index')
 
 app.use(cors())
 app.use(cookie())
