@@ -36,11 +36,10 @@ io.on('connection', socket=>{
     socket.emit('connect', (socket.user, 'from BE'))
     socket.on('joinRoom', async (roomId)=>{
         const user = await User.findById(socket.user)
-        // const users = await 
 
         socket.join(roomId)
         const users = await joinRoom(user.name,roomId)
-        // console.log(users)
+
         socket.emit('members', users)
         socket.broadcast.to(roomId).emit('new-message', {message:{id:randomId(), message:`${user.name} joined the groud`}, name:'Admin'})
         socket.emit('new-message', {message: {id:randomId(), message:`welcome to the group ${user.name}`}, name:'Admin'})
